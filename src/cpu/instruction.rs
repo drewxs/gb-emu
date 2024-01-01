@@ -18,9 +18,24 @@ pub enum ADDHLTarget {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
+pub enum IncDecTarget {
+    A,
+    B,
+    C,
+    D,
+    E,
+    H,
+    L,
+    BC,
+    DE,
+    HL,
+    SP,
+}
+
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Instruction {
-    INC(ArithmeticTarget), // increment
-    DEC(ArithmeticTarget), // decrement
+    INC(IncDecTarget), // increment
+    DEC(IncDecTarget), // decrement
 
     ADD(ArithmeticTarget), // add
     ADDHL(ADDHLTarget),    // add to HL
