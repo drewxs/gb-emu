@@ -1,108 +1,142 @@
 pub mod flags_register;
 pub mod instruction;
+pub mod memory_bus;
 pub mod registers;
 
 use self::instruction::{ADDHLTarget, ArithmeticTarget, IncDecTarget, Instruction};
+use self::memory_bus::MemoryBus;
 use self::registers::Registers;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 struct CPU {
     pub registers: Registers,
-    sp: u16,
+    pc: u16, // program counter
+    sp: u16, // stack pointer
+    bus: MemoryBus,
 }
 
 impl CPU {
-    pub fn execute(&mut self, instruction: Instruction) {
+    pub fn step(&mut self) {
+        let instruction_byte = self.bus.read_byte(self.pc);
+
+        if let Some(instruction) = Instruction::from_byte(instruction_byte) {
+            let next_pc = self.execute(instruction);
+            self.pc = next_pc;
+        }
+    }
+
+    pub fn execute(&mut self, instruction: Instruction) -> u16 {
         match instruction {
             Instruction::INC(register) => match register {
                 IncDecTarget::A => {
                     self.registers.a = self.registers.a.wrapping_add(1);
+                    self.pc
                 }
                 IncDecTarget::B => {
                     self.registers.b = self.registers.b.wrapping_add(1);
+                    self.pc
                 }
                 IncDecTarget::C => {
                     self.registers.c = self.registers.c.wrapping_add(1);
+                    self.pc
                 }
                 IncDecTarget::D => {
                     self.registers.d = self.registers.d.wrapping_add(1);
+                    self.pc
                 }
                 IncDecTarget::E => {
                     self.registers.e = self.registers.e.wrapping_add(1);
+                    self.pc
                 }
                 IncDecTarget::H => {
                     self.registers.h = self.registers.h.wrapping_add(1);
+                    self.pc
                 }
                 IncDecTarget::L => {
                     self.registers.l = self.registers.l.wrapping_add(1);
+                    self.pc
                 }
                 IncDecTarget::BC => {
                     let value = self.registers.get_bc();
                     let new_value = value.wrapping_add(1);
                     self.registers.set_bc(new_value);
+                    self.pc
                 }
                 IncDecTarget::DE => {
                     let value = self.registers.get_de();
                     let new_value = value.wrapping_add(1);
                     self.registers.set_de(new_value);
+                    self.pc
                 }
                 IncDecTarget::HL => {
                     let value = self.registers.get_hl();
                     let new_value = value.wrapping_add(1);
                     self.registers.set_hl(new_value);
+                    self.pc
                 }
                 IncDecTarget::SP => {
                     self.sp = self.sp.wrapping_add(1);
+                    self.pc
                 }
             },
             Instruction::DEC(register) => match register {
                 IncDecTarget::A => {
                     self.registers.a = self.registers.a.wrapping_sub(1);
+                    self.pc
                 }
                 IncDecTarget::B => {
                     self.registers.b = self.registers.b.wrapping_sub(1);
+                    self.pc
                 }
                 IncDecTarget::C => {
                     self.registers.c = self.registers.c.wrapping_sub(1);
+                    self.pc
                 }
                 IncDecTarget::D => {
                     self.registers.d = self.registers.d.wrapping_sub(1);
+                    self.pc
                 }
                 IncDecTarget::E => {
                     self.registers.e = self.registers.e.wrapping_sub(1);
+                    self.pc
                 }
                 IncDecTarget::H => {
                     self.registers.h = self.registers.h.wrapping_sub(1);
+                    self.pc
                 }
                 IncDecTarget::L => {
                     self.registers.l = self.registers.l.wrapping_sub(1);
+                    self.pc
                 }
                 IncDecTarget::BC => {
                     let value = self.registers.get_bc();
                     let new_value = value.wrapping_sub(1);
                     self.registers.set_bc(new_value);
+                    self.pc
                 }
                 IncDecTarget::DE => {
                     let value = self.registers.get_de();
                     let new_value = value.wrapping_sub(1);
                     self.registers.set_de(new_value);
+                    self.pc
                 }
                 IncDecTarget::HL => {
                     let value = self.registers.get_hl();
                     let new_value = value.wrapping_sub(1);
                     self.registers.set_hl(new_value);
+                    self.pc
                 }
                 IncDecTarget::SP => {
                     self.sp = self.sp.wrapping_sub(1);
+                    self.pc
                 }
             },
             Instruction::ADD(register) => match register {
                 ArithmeticTarget::C => {
-                    let value = self.registers.c;
-                    let new_value = self.add(value);
-                    self.registers.a = new_value;
+                    self.registers.a = self.add(self.registers.c);
+                    self.pc
                 }
-                _ => {}
+                _ => self.pc,
             },
             Instruction::ADDHL(register) => {
                 let value = match register {
@@ -113,8 +147,9 @@ impl CPU {
                 };
                 let res = self.add_hl(value);
                 self.registers.set_hl(res);
+                self.pc
             }
-            _ => {}
+            _ => self.pc,
         }
     }
 
