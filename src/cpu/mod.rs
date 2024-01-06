@@ -3,7 +3,7 @@ pub mod instruction;
 pub mod memory_bus;
 pub mod registers;
 
-use self::instruction::{ADDHLTarget, ArithmeticTarget, IncDecTarget, Instruction};
+use self::instruction::{ADDHLTarget, ArithmeticTarget, IncDecTarget, Instruction, JumpTest};
 use self::memory_bus::MemoryBus;
 use self::registers::Registers;
 
@@ -17,7 +17,11 @@ struct CPU {
 
 impl CPU {
     pub fn step(&mut self) {
-        let instruction_byte = self.bus.read_byte(self.pc);
+        let mut instruction_byte = self.bus.read_byte(self.pc);
+        let prefixed = instruction_byte == 0xCB;
+        if prefixed {
+            instruction_byte = self.bus.read_byte(self.pc + 1);
+        }
 
         if let Some(instruction) = Instruction::from_byte(instruction_byte) {
             let next_pc = self.execute(instruction);
@@ -149,7 +153,27 @@ impl CPU {
                 self.registers.set_hl(res);
                 self.pc
             }
+            Instruction::JP(test) => {
+                let jump_condition = match test {
+                    JumpTest::NotZero => !self.registers.f.zero,
+                    JumpTest::NotCarry => !self.registers.f.carry,
+                    JumpTest::Zero => self.registers.f.zero,
+                    JumpTest::Carry => self.registers.f.carry,
+                    JumpTest::Always => true,
+                };
+                self.jump(jump_condition)
+            }
             _ => self.pc,
+        }
+    }
+
+    pub fn jump(&self, should_jump: bool) -> u16 {
+        if should_jump {
+            let least_significant_byte = self.bus.read_byte(self.pc + 1) as u16;
+            let most_significant_byte = self.bus.read_byte(self.pc + 2) as u16;
+            (most_significant_byte << 8) | least_significant_byte
+        } else {
+            self.pc.wrapping_add(3)
         }
     }
 

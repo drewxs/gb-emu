@@ -33,6 +33,15 @@ pub enum IncDecTarget {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
+pub enum JumpTest {
+    NotZero,
+    Zero,
+    NotCarry,
+    Carry,
+    Always,
+}
+
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Instruction {
     INC(IncDecTarget), // increment
     DEC(IncDecTarget), // decrement
@@ -72,6 +81,8 @@ pub enum Instruction {
     RLC(ArithmeticTarget), // rotate left (no carry)
 
     SWAP(ArithmeticTarget), // swap nibbles
+
+    JP(JumpTest), // jump
 }
 
 impl Instruction {
