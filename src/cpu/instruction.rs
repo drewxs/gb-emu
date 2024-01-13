@@ -1,45 +1,6 @@
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub enum ArithmeticTarget {
-    A,
-    B,
-    C,
-    D,
-    E,
-    H,
-    L,
-}
-
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub enum ADDHLTarget {
-    BC,
-    DE,
-    HL,
-    SP,
-}
-
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub enum IncDecTarget {
-    A,
-    B,
-    C,
-    D,
-    E,
-    H,
-    L,
-    BC,
-    DE,
-    HL,
-    SP,
-}
-
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub enum JumpTest {
-    NotZero,
-    Zero,
-    NotCarry,
-    Carry,
-    Always,
-}
+use super::targets::{
+    ADDHLTarget, ArithmeticTarget, IncDecTarget, JumpTest, LoadType, StackTarget,
+};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Instruction {
@@ -83,6 +44,16 @@ pub enum Instruction {
     SWAP(ArithmeticTarget), // swap nibbles
 
     JP(JumpTest), // jump
+    LD(LoadType), // load
+
+    PUSH(StackTarget), // push to stack
+    POP(StackTarget),  // pop from stack
+
+    CALL(JumpTest), // call
+    RET(JumpTest),  // return
+
+    NOP,  // no operation
+    HALT, // halt
 }
 
 impl Instruction {
